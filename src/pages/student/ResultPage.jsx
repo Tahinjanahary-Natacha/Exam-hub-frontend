@@ -1,21 +1,135 @@
-import { useEffect, useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
-import { apiFetch } from '../../api/client.js';
-import Message from '../../components/Message.jsx';
-import Loading from '../../components/Loading.jsx';
+import { Link, useLocation } from "react-router-dom";
 
 export default function ResultPage() {
-  const { id } = useParams(); const location = useLocation();
-  const [result, setResult] = useState(location.state?.result ?? null), [error, setError] = useState('');
-  useEffect(() => {
-    if (!result) apiFetch(`/my/results?examId=${id}`).then(setResult).catch(e => setError(e.message));
-  }, [id, result]);
-  if (error) return <Message error={error} />; if (!result) return <Loading />;
-  return <><div className="page-header"><div><h2>Résultat</h2><p className="muted">Correction complète de votre soumission.</p></div><div className="score-box"><strong>{result.score} / {result.maxScore ?? result.max_score}</strong><span>{result.percentage}%</span></div></div>
-    <div className="stack">{result.corrections.map((c, index) => <article className={`card correction ${c.isCorrect ? 'correct' : 'wrong'}`} key={c.questionId}><div className="question-title"><b>{index + 1}. {c.statement}</b><span>{c.earnedPoints} / {c.points} pt</span></div><div className="correction-choices">{c.choices.map(choice => {
-      const selected = Number(c.selectedChoiceId) === Number(choice.id); const correct = Number(c.correctChoiceId) === Number(choice.id);
-      return <div key={choice.id} className={`correction-choice ${correct ? 'good-choice' : ''} ${selected && !correct ? 'bad-choice' : ''}`}><span>{choice.label}</span><span>{correct ? '✓ Bonne réponse' : selected ? '✗ Votre choix' : ''}</span></div>;
-    })}</div>{c.selectedChoiceId == null && <p className="muted">Aucune réponse sélectionnée — 0 point.</p>}</article>)}</div>
-    <div className="actions"><Link className="button-link primary" to="/student/results">Voir mon historique</Link><Link className="button-link" to="/student">Retour aux examens</Link></div>
-  </>;
+  const location = useLocation();
+  const result = location.state?.result;
+
+  if (!result) {
+    return (
+      <div className="card">
+        <h2>Résultat indisponible</h2>
+
+        <p className="muted">
+          Le détail de la correction est disponible immédiatement
+          après la soumission de l'examen.
+        </p>
+
+        <Link
+          className="button-link"
+          to="/student/results"
+        >
+          Voir mes résultats
+        </Link>
+      </div>
+    );
+  }
+
+  const score = Number(result.score ?? 0);
+  const totalPoints = Number(result.total_points ?? 0);
+
+  const percentage =
+    totalPoints > 0
+      ? Math.round((score / totalPoints) * 100)
+      : 0;
+
+  const correction = Array.isArray(result.correction)
+    ? result.correction
+    : [];
+
+  return (
+    <>
+      <div className="page-header">
+        <div>
+          <h2>Résultat de l'examen</h2>
+
+          <p className="muted">
+            Votre note et la correction complète.
+          </p>
+        </div>
+      </div>
+
+      <div className="stats-grid">
+        <div className="card stat">
+          <strong>{score}</strong>
+          <span>Points obtenus</span>
+        </div>
+
+        <div className="card stat">
+          <strong>{totalPoints}</strong>
+          <span>Barème</span>
+        </div>
+
+        <div className="card stat">
+          <strong>{percentage}%</strong>
+          <span>Résultat</span>
+        </div>
+      </div>
+
+      <div className="stack">
+        {correction.map((item, index) => (
+          <article
+            className={`card result-question ${
+              item.is_correct ? "result-correct" : "result-wrong"
+            }`}
+            key={item.question_id}
+          >
+            <div className="result-question-header">
+              <div>
+                <span className="question-number">
+                  Question {index + 1}
+                </span>
+
+                <h3>{item.statement}</h3>
+              </div>
+
+              <span
+                className={
+                  item.is_correct
+                    ? "status success"
+                    : "status off"
+                }
+              >
+                {item.is_correct ? "Correct" : "Incorrect"}
+              </span>
+            </div>
+
+            <div className="result-details">
+              <p>
+                <strong>Points :</strong>{" "}
+                {item.is_correct ? item.points : 0} / {item.points}
+              </p>
+
+              <p>
+  <strong>Votre réponse :</strong>{" "}
+  {item.student_choice_id === null
+    ? "Aucune réponse"
+    : item.student_choice_text}
+</p>
+
+<p>
+  <strong>Bonne réponse :</strong>{" "}
+  {item.correct_choice_text}
+</p>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="actions" style={{ marginTop: "24px" }}>
+        <Link
+          className="button-link"
+          to="/student/results"
+        >
+          Voir mon historique
+        </Link>
+
+        <Link
+          className="button-link"
+          to="/student"
+        >
+          Retour aux examens
+        </Link>
+      </div>
+    </>
+  );
 }

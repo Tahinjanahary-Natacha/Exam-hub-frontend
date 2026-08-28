@@ -37,11 +37,11 @@ export default function StudentsPage() {
   async function toggle(student) {
     setError(''); setSuccess('');
     try {
-      if (student.active) {
+      if (student.is_active) {
         await apiFetch(`/students/${student.id}`, { method: 'DELETE' });
         setSuccess('Compte désactivé.');
       } else {
-        await apiFetch(`/students/${student.id}`, { method: 'PUT', body: JSON.stringify({ name: student.name, email: student.email, active: true }) });
+        await apiFetch(`/students/${student.id}`, { method: 'PUT', body: JSON.stringify({ name: student.name, email: student.email, is_active: true }) });
         setSuccess('Compte réactivé.');
       }
       await load();
@@ -68,7 +68,7 @@ export default function StudentsPage() {
       <div className="actions"><button className="primary">{editingId ? 'Enregistrer' : 'Créer'}</button>{editingId && <button type="button" onClick={() => { setEditingId(null); setForm(emptyForm); }}>Annuler</button>}</div>
     </form>
     <div className="card table-wrap"><table><thead><tr><th>Nom</th><th>Email</th><th>Statut</th><th>Actions</th></tr></thead><tbody>
-      {students.map(student => <tr key={student.id}><td>{student.name}</td><td>{student.email}</td><td><span className={`status ${student.active ? 'ok' : 'off'}`}>{student.active ? 'Actif' : 'Désactivé'}</span></td><td className="actions"><button onClick={() => edit(student)}>Modifier</button><button onClick={() => resetPassword(student)}>Réinitialiser MDP</button><button className={student.active ? 'danger' : ''} onClick={() => toggle(student)}>{student.active ? 'Désactiver' : 'Réactiver'}</button></td></tr>)}
+      {students.map(student => <tr key={student.id}><td>{student.name}</td><td>{student.email}</td><td><span className={`status ${student.is_active ? 'ok' : 'off'}`}>{student.is_active ? 'Actif' : 'Désactivé'}</span></td><td className="actions"><button onClick={() => edit(student)}>Modifier</button><button onClick={() => resetPassword(student)}>Réinitialiser MDP</button><button className={student.is_active ? 'danger' : ''} onClick={() => toggle(student)}>{student.is_active ? 'Désactiver' : 'Réactiver'}</button></td></tr>)}
     </tbody></table></div>
   </>;
 }
